@@ -1,5 +1,5 @@
 # Let's Encrypt Azure
-[![Build status](https://dev.azure.com/letsencrypt/letsencrypt/_apis/build/status/LetsEncrypt-Azure-CI)](https://dev.azure.com/letsencrypt/letsencrypt/_build/latest?definitionId=4)
+[![Build Status](https://dev.azure.com/BurnTide/letsencrypt/_apis/build/status/letsencrypt-azure?branchName=master)](https://dev.azure.com/BurnTide/letsencrypt/_build/latest?definitionId=1&branchName=master)
 
 The easiest and most robust method for deploying Let's Encrypt Wild Card Certificate to Azure Web Apps. 
 
