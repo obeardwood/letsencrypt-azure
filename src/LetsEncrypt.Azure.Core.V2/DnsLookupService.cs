@@ -75,7 +75,7 @@ namespace LetsEncrypt.Azure.Core.V2
                 return hostname;
             string rootDomain = GetRootDomain(hostname);
             string nonWildcardDomain = GetNoneWildcardDomain(hostname);
-            return nonWildcardDomain.Replace($"{rootDomain}", "");
+            return nonWildcardDomain.Replace($".{rootDomain}", "");
         }
 
         public static string GetRootDomain(string hostname)
