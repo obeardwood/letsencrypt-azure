@@ -7,7 +7,7 @@ The easiest and most robust method for deploying Let's Encrypt Wild Card Certifi
 ## Azure DNS + Azure Web  
 Deployment template for setting up Let's Encrypt wild card certificate for Azure Web App (hosting plan and web app must be colocated in same resource group). Hostname must already be configured on the Web App and the DNS must be setup in Azure. 
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fsjkp%2Fletsencrypt-azure%2Fmaster%2Fsrc%2FLetsEncrypt.Azure.ResourceGroup%2FTemplates%2Fletsencrypt.functionapp.renewer.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fjixt%2Fletsencrypt-azure%2Fmaster%2Fsrc%2FLetsEncrypt.Azure.ResourceGroup%2FTemplates%2Fletsencrypt.functionapp.renewer.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
 
 # What is Let's Encrypt Azure
 
