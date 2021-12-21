@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using DnsClient;
+using LetsEncrypt.Azure.Core.V2.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -17,12 +18,14 @@ namespace LetsEncrypt.Azure.Core.V2
             this.logger = logger ?? NullLogger<DnsLookupService>.Instance;
         }
 
-        public async Task<bool> Exists(string hostname, string dnsTxt, int timeout = 60)
+        public async Task<bool> Exists(string hostname, string dnsTxt, AzureDnsSettings settings, int timeout = 60)
         {
             logger.LogInformation("Starting dns precheck validation for hostname: {HostName} challenge: {Challenge} and timeout {Timeout}", hostname, dnsTxt, timeout);
             var idn = new IdnMapping();
-            hostname = idn.GetAscii(GetNoneWildcardDomain(hostname));
-            var dnsClient = GetDnsClient(GetRootDomain(hostname));
+
+            hostname = idn.GetAscii(hostname.Replace("*.", ""));
+            var dnsClient = GetDnsClient(settings.ZoneName);
+
             var startTime = DateTime.UtcNow;
             string queriedDns = "";
             //Lets encrypt checks a random authoritative server, thus we need to ensure that all respond with the challenge. 
@@ -55,37 +58,18 @@ namespace LetsEncrypt.Azure.Core.V2
             {
                 var ns = generalClient.Query(hostname, QueryType.NS);
                 var ip = ns.Answers.NsRecords().Select(s => generalClient.GetHostEntry(s.NSDName.Value));
-            
+
                 dnsClient = new LookupClient(ip.SelectMany(i => i.AddressList).Where(s => s.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork).ToArray());
                 dnsClient.UseCache = false;
-                
+
             }
 
             return dnsClient;
         }
 
-        public static string GetNoneWildcardDomain(string hostname)
+        public static string GetNoneWildcardSubdomain(string host, AzureDnsSettings settings)
         {
-            return hostname.Replace("*.", "");
-        }
-
-        public static string GetNoneWildcardSubdomain(string hostname)
-        {
-            if (string.IsNullOrEmpty(hostname))
-                return hostname;
-            string rootDomain = GetRootDomain(hostname);
-            string nonWildcardDomain = GetNoneWildcardDomain(hostname);
-            return nonWildcardDomain.Replace($".{rootDomain}", "");
-        }
-
-        public static string GetRootDomain(string hostname)
-        {
-            if (string.IsNullOrEmpty(hostname))
-                return hostname;
-            string[] hostParts = hostname.Split('.');
-            if (hostParts.Length < 2)
-                return hostname;
-            return String.Join(".", hostParts.Skip(Math.Max(0, hostParts.Length - 2)).Take(2));
+            return host.Replace("." + settings.ZoneName, "").Replace("*.", "");
         }
     }
 }

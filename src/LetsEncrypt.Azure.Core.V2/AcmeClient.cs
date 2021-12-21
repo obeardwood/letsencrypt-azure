@@ -38,7 +38,7 @@ namespace LetsEncrypt.Azure.Core.V2
         /// <param name="azureDnsEnvironment"></param>
         /// <param name="acmeConfig"></param>
         /// <returns></returns>
-        public async Task<CertificateInstallModel> RequestDnsChallengeCertificate(IAcmeDnsRequest acmeConfig)
+        public async Task<CertificateInstallModel> RequestDnsChallengeCertificate(IAcmeDnsRequest acmeConfig, AzureDnsSettings settings)
         {
             logger.LogInformation("Starting request DNS Challenge certificate for {AcmeEnvironment} and {Email}", acmeConfig.AcmeEnvironment.BaseUri, acmeConfig.RegistrationEmail);
             var acmeContext = await GetOrCreateAcmeContext(acmeConfig.AcmeEnvironment.BaseUri, acmeConfig.RegistrationEmail);
@@ -52,13 +52,14 @@ namespace LetsEncrypt.Azure.Core.V2
             logger.LogInformation("Got DNS challenge token {Token}", dnsTxt);
 
             ///add dns entry
-            await this.dnsProvider.PersistChallenge(String.Concat("_acme-challenge.", DnsLookupService.GetNoneWildcardSubdomain(acmeConfig.Host)), dnsTxt);
+            var domain = DnsLookupService.GetNoneWildcardSubdomain(acmeConfig.Host, settings);
+            logger.LogInformation(domain);
 
-            if (!(await this.dnsLookupService.Exists(acmeConfig.Host, dnsTxt, this.dnsProvider.MinimumTtl)))
+            await this.dnsProvider.PersistChallenge(String.Concat("_acme-challenge.", domain), dnsTxt);
+            if (!(await this.dnsLookupService.Exists(acmeConfig.Host, dnsTxt, settings, this.dnsProvider.MinimumTtl)))
             {
                 throw new TimeoutException($"Unable to validate that _acme-challenge was stored in txt _acme-challenge record after {this.dnsProvider.MinimumTtl} seconds");
             }
-
             
             Challenge chalResp = await challenge.Validate();
             while (chalResp.Status == ChallengeStatus.Pending || chalResp.Status == ChallengeStatus.Processing)

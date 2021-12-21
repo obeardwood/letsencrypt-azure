@@ -13,15 +13,16 @@ namespace LetsEncrypt.Azure.Core.V2
         private readonly AcmeClient acmeClient;
         private readonly ICertificateStore certificateStore;
         private readonly ICertificateConsumer certificateConsumer;
-        private readonly AzureWebAppService azureWebAppService;
         private readonly ILogger<LetsencryptService> logger;
+        private readonly AzureDnsSettings azureDnsSettings;
 
-        public LetsencryptService(AcmeClient acmeClient, ICertificateStore certificateStore, ICertificateConsumer certificateConsumer, ILogger<LetsencryptService> logger = null)
+        public LetsencryptService(AcmeClient acmeClient, ICertificateStore certificateStore, ICertificateConsumer certificateConsumer, AzureDnsSettings settings, ILogger<LetsencryptService> logger = null)
         {
             this.acmeClient = acmeClient;
             this.certificateStore = certificateStore;
             this.certificateConsumer = certificateConsumer;
             this.logger = logger ?? NullLogger<LetsencryptService>.Instance;
+            this.azureDnsSettings = settings;
         }
         public async Task Run(AcmeDnsRequest acmeDnsRequest, int renewXNumberOfDaysBeforeExpiration)
         {
@@ -34,7 +35,7 @@ namespace LetsEncrypt.Azure.Core.V2
                 if (cert == null || cert.Certificate.NotAfter < DateTime.UtcNow.AddDays(renewXNumberOfDaysBeforeExpiration)) //Cert doesnt exist or expires in less than renewXNumberOfDaysBeforeExpiration days, lets renew.
                 {
                     logger.LogInformation("Certificate store didn't contain certificate or certificate was expired starting renewing");
-                    model = await acmeClient.RequestDnsChallengeCertificate(acmeDnsRequest);
+                    model = await acmeClient.RequestDnsChallengeCertificate(acmeDnsRequest, this.azureDnsSettings);
                     model.CertificateInfo.Name = certname;
                     await certificateStore.SaveCertificate(model.CertificateInfo);
                 }
