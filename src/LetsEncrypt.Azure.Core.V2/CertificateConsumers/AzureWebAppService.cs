@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Azure.Core;
+using Azure.ResourceManager.AppService;
+using Azure.ResourceManager.Resources;
 using Microsoft.Azure.Management.AppService.Fluent;
 using Microsoft.Azure.Management.AppService.Fluent.Models;
 using LetsEncrypt.Azure.Core.V2.Models;
@@ -30,6 +33,7 @@ namespace LetsEncrypt.Azure.Core.V2
                 logger.LogInformation("Installing certificate for web app {WebApp}", setting.WebAppName);
                 try
                 {
+                    
                     IAppServiceManager appServiceManager = GetAppServiceManager(setting);
                     var s = appServiceManager.WebApps.GetByResourceGroup(setting.ResourceGroupName, setting.WebAppName);
                     IWebAppBase siteOrSlot = s;
@@ -83,9 +87,16 @@ namespace LetsEncrypt.Azure.Core.V2
             }
         }
 
-        private static IAppServiceManager GetAppServiceManager(AzureWebAppSettings settings)
+        private static async IAppServiceManager GetAppServiceManager(AzureWebAppSettings settings)
         {
-            var restClient = AzureHelper.GetRestClient(settings.AzureServicePrincipal, settings.AzureSubscription);
+            var client = AzureHelper.GetClient(settings.AzureServicePrincipal, settings.AzureSubscription);
+            var subscription = await client.GetDefaultSubscriptionAsync();
+            var resourceGroups = subscription.GetResourceGroups();
+            var region  = new ResourceGroupData(AzureLocation.UKSouth);
+            var group = await resourceGroups.GetIfExistsAsync("");
+
+            var a = subscription.GetWebSitesAsync();
+            
             return new AppServiceManager(restClient, settings.AzureSubscription.SubscriptionId, settings.AzureSubscription.Tenant);
         }
 

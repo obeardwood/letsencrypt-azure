@@ -1,9 +1,7 @@
 ﻿using LetsEncrypt.Azure.Core.V2.Models;
-using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
-using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
-using Microsoft.Azure.Services.AppAuthentication;
-using Microsoft.Rest;
 using System;
+using Azure.Identity;
+using Azure.ResourceManager;
 
 namespace LetsEncrypt.Azure.Core.V2
 {
@@ -32,14 +30,10 @@ namespace LetsEncrypt.Azure.Core.V2
         }
 
 
-        public static RestClient GetRestClient(AzureServicePrincipal servicePrincipal, AzureSubscription azureSubscription)
+        public static ArmClient GetClient(AzureServicePrincipal servicePrincipal, AzureSubscription azureSubscription)
         {            
-            var credentials = GetAzureCredentials(servicePrincipal, azureSubscription);
-            return RestClient
-                .Configure()
-                .WithEnvironment(Microsoft.Azure.Management.ResourceManager.Fluent.AzureEnvironment.FromName(azureSubscription.AzureRegion))
-                .WithCredentials(credentials)
-                .Build();
+            ClientSecretCredential credential = new ClientSecretCredential(azureSubscription.Tenant, servicePrincipal.ClientId, servicePrincipal.ClientSecret);
+            return new ArmClient(credential, azureSubscription.SubscriptionId);
         }
     }
 }

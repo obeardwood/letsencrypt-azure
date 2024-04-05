@@ -2,10 +2,10 @@
 using LetsEncrypt.Azure.Core.V2.CertificateStores;
 using LetsEncrypt.Azure.Core.V2.DnsProviders;
 using LetsEncrypt.Azure.Core.V2.Models;
-using Microsoft.Azure.KeyVault;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Linq;
+using Azure.Security.KeyVault.Secrets;
 
 namespace LetsEncrypt.Azure.Core.V2
 {
@@ -30,7 +30,7 @@ namespace LetsEncrypt.Azure.Core.V2
             return serviceCollection
                 .AddTransient<ICertificateStore>((serviceProvider) =>
             {
-                return new AzureKeyVaultCertificateStore(serviceProvider.GetService<IKeyVaultClient>(), vaultBaseUrl);
+                return new AzureKeyVaultCertificateStore(serviceProvider.GetService<SecretClient>(), vaultBaseUrl);
             });
         }
 

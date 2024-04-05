@@ -1,47 +1,47 @@
-﻿using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Blob;
+﻿using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Specialized;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace LetsEncrypt.Azure.Core.V2
 {
     public class AzureBlobStorage : IFileSystem
     {
-        private CloudStorageAccount storageAccount;
+        private BlobServiceClient client;
 
         public AzureBlobStorage(string connectionString)
         {
-            this.storageAccount = CloudStorageAccount.Parse(connectionString);
+            this.client = new BlobServiceClient(connectionString);
         }
 
         public async Task<bool> Exists(string v)
         {
-            CloudBlockBlob blob = await GetBlob(v);
+            BlockBlobClient blob = await GetBlob(v);
             return await blob.ExistsAsync();
         }
 
-        private async Task<CloudBlockBlob> GetBlob(string v)
+        private async Task<BlockBlobClient> GetBlob(string v)
         {
-            var client = storageAccount.CreateCloudBlobClient();
-            var container = client.GetContainerReference("letsencrypt");
-            await container.CreateIfNotExistsAsync();
-
-            
-            var blob = container.GetBlockBlobReference(v);
-
-            return blob;
+            var container = client.GetBlobContainerClient("letsencrypt");
+            await container.CreateIfNotExistsAsync();            
+            return container.GetBlockBlobClient(v);
         }
 
         public async Task<string> ReadAllText(string v)
         {
             var blob = await GetBlob(v);
-            return await blob.DownloadTextAsync();
+            return (await blob.DownloadContentAsync()).Value?.Content.ToString() ?? string.Empty; 
         }
 
         public async Task WriteAllText(string v, string pemKey)
         {
             var blob = await GetBlob(v);
-            await blob.UploadTextAsync(pemKey);
+            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(pemKey)))
+            {
+                await blob.UploadAsync(stream);
+            }
         }
 
         public async Task<byte[]> Read(string v)
@@ -59,7 +59,7 @@ namespace LetsEncrypt.Azure.Core.V2
         {
             var blob = await GetBlob(v);
             using (var ms = new MemoryStream(data))
-                await blob.UploadFromStreamAsync(ms);
+                await blob.UploadAsync(ms);
         }
     }
 }

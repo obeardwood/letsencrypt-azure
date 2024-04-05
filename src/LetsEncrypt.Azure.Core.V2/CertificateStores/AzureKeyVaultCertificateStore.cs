@@ -2,6 +2,7 @@
 using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Azure.Security.KeyVault.Secrets;
 using LetsEncrypt.Azure.Core.V2.Models;
 using Microsoft.Azure.KeyVault;
 using Microsoft.Azure.KeyVault.Models;
@@ -13,7 +14,7 @@ namespace LetsEncrypt.Azure.Core.V2.CertificateStores
     public class AzureKeyVaultCertificateStore : ICertificateStore
     {
         /// <summary>The key vault client.</summary>
-        private readonly IKeyVaultClient keyVaultClient;
+        private readonly SecretClient keyVaultClient;
 
         /// <summary>The base URL for the key vault, typically https://{keyvaultname}.vault.azure.net</summary>
         public string vaultBaseUrl { get; }
@@ -25,7 +26,7 @@ namespace LetsEncrypt.Azure.Core.V2.CertificateStores
         /// <param name="vaultBaseUrl">
         /// The base URL for the key vault, typically https://{keyvaultname}.vault.azure.net.
         /// </param>
-        public AzureKeyVaultCertificateStore(IKeyVaultClient keyVaultClient, string vaultBaseUrl)
+        public AzureKeyVaultCertificateStore(SecretClient keyVaultClient, string vaultBaseUrl)
         {
             this.keyVaultClient = keyVaultClient;
             this.vaultBaseUrl = vaultBaseUrl;

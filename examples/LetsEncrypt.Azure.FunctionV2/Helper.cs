@@ -1,13 +1,13 @@
 ﻿using LetsEncrypt.Azure.Core.V2;
 using LetsEncrypt.Azure.Core.V2.DnsProviders;
 using LetsEncrypt.Azure.Core.V2.Models;
-using Microsoft.Azure.KeyVault;
-using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
+using Azure.Identity;
+using Azure.Security.KeyVault.Secrets;
 
 namespace LetsEncrypt.Azure.FunctionV2
 {
@@ -27,12 +27,14 @@ namespace LetsEncrypt.Azure.FunctionV2
             var vaultBaseUrl = $"https://{Environment.GetEnvironmentVariable("Vault")}.vault.azure.net/";
             log.LogInformation("C# HTTP trigger function processed a request.");
             var Configuration = new ConfigurationBuilder()
-                .AddAzureKeyVault(vaultBaseUrl) //Use MSI to get token
                 .AddEnvironmentVariables()
                 .Build();
-            var tokenProvider = new AzureServiceTokenProvider();
-            //Create the Key Vault client
-            var kvClient = new KeyVaultClient((authority, resource, scope) => tokenProvider.KeyVaultTokenCallback(authority, resource, scope), new MessageLoggingHandler(log));
+
+            // var appCredentials = new ClientSecretCredential(
+            //     Environment.GetEnvironmentVariable("AzureAppService__AzureSubscription__Tenant"), 
+            //     Environment.GetEnvironmentVariable("AzureAppService__AzureSubscription__SubscriptionId"), 
+            //     Environment.GetEnvironmentVariable("MYTHIC_APP_KEY"));
+            var kvClient = new SecretClient(new Uri(vaultBaseUrl), new DefaultAzureCredential());
 
             IServiceCollection serviceCollection = new ServiceCollection();
 
@@ -48,7 +50,7 @@ namespace LetsEncrypt.Azure.FunctionV2
                 serviceCollection.AddNullCertificateConsumer();
             }
 
-            serviceCollection.AddSingleton<IKeyVaultClient>(kvClient)
+            serviceCollection.AddSingleton(kvClient)
             .AddKeyVaultCertificateStore(vaultBaseUrl);
 
 

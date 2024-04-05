@@ -1,5 +1,4 @@
-﻿using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 
